@@ -33,5 +33,6 @@ The bot will sync its slash commands on startup.
 Run these commands **inside the target reporting channels**:
 - `/setup_shooting_panel` — Creates the shooting report panel. Only the CEO role can invoke this.
 - `/setup_editing_panel` — Creates the editing report panel. Only the CEO role can invoke this.
+- `/setup_reporting_panels` — Posts both panels to their configured channels in one go. Only the CEO role can invoke this.
 
 Each panel posts a button that opens the corresponding report modal for authorized roles. Submitted reports are routed to the review channels with decision buttons and DM notifications to authors after review.
