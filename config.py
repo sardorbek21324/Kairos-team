@@ -64,5 +64,11 @@ PUBLISH_CATEGORY_ID: int = _get_env_int("PUBLISH_CATEGORY_ID", 14431486574185676
 PUBLISH_REPORT_CHANNEL_ID: int = _get_env_int("PUBLISH_REPORT_CHANNEL_ID", 1443148929742143569)
 PUBLISH_REVIEW_CHANNEL_ID: int = _get_env_int("PUBLISH_REVIEW_CHANNEL_ID", 1443148973777879151)
 
+# Final publish handling
+POST_DONE_CHANNEL_ID: int = _get_env_int("POST_DONE_CHANNEL_ID", 1443174328416997456)
+
+# Logging channel for rejected reports
+HIGH_STAFF_CHANNEL_ID: int = _get_env_int("HIGH_STAFF_CHANNEL_ID", 1443152514760314964)
+
 # Global settings
 COMMAND_GUILD_IDS: tuple[int, ...] | None = _get_env_int_tuple("COMMAND_GUILD_IDS", None)  # Comma-separated IDs

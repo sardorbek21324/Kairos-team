@@ -277,6 +277,37 @@ class EditingDecisionModal(discord.ui.Modal):
                     except Exception:
                         log.warning("Не удалось отправить DM автору", exc_info=True)
 
+            if self.status == "rejected":
+                d1_channel = interaction.client.get_channel(config.HIGH_STAFF_CHANNEL_ID)
+                if isinstance(d1_channel, discord.TextChannel):
+                    error_embed = discord.Embed(
+                        title="❌ Отклонённый отчёт по монтажу",
+                        color=discord.Color.dark_red(),
+                        timestamp=discord.utils.utcnow(),
+                    )
+                    for field in embed.fields:
+                        if field.name == "Статус":
+                            continue
+                        error_embed.add_field(
+                            name=field.name, value=field.value, inline=field.inline
+                        )
+                    error_embed.add_field(
+                        name="Комментарий",
+                        value=comment_value or "нет комментария",
+                        inline=False,
+                    )
+                    error_embed.add_field(
+                        name="Отклонил",
+                        value=f"{self.reviewer} (ID: {self.reviewer.id})",
+                        inline=False,
+                    )
+                    error_embed.add_field(
+                        name="Ссылка на отчёт", value=interaction.message.jump_url, inline=False
+                    )
+
+                    content = f"<@&{config.PROJECT_MANAGER_ROLE_ID}> <@&{config.CEO_ROLE_ID}>"
+                    await d1_channel.send(content=content, embed=error_embed)
+
             if self.status == "accepted":
                 publish_channel = interaction.client.get_channel(config.PUBLISH_REPORT_CHANNEL_ID)
                 if not isinstance(publish_channel, discord.TextChannel):
@@ -349,8 +380,9 @@ class EditingDecisionView(discord.ui.View):
 
 
 class PublishDecisionView(discord.ui.View):
-    def __init__(self, *, timeout: Optional[float] = None):
+    def __init__(self, *, timeout: Optional[float] = None, disabled: bool = False):
         super().__init__(timeout=timeout)
+        self.publish_needed_button.disabled = disabled
 
     @discord.ui.button(
         label="Нужно опубликовать",
@@ -381,7 +413,22 @@ class PublishDecisionView(discord.ui.View):
                 )
                 return
 
+            post_channel = interaction.client.get_channel(config.POST_DONE_CHANNEL_ID)
+            if not isinstance(post_channel, discord.TextChannel):
+                await interaction.response.send_message(
+                    "Канал post-done не найден. Обратитесь к администратору.",
+                    ephemeral=True,
+                )
+                return
+
             embed = discord.Embed.from_dict(interaction.message.embeds[0].to_dict())
+            publish_title_prefix = "📢"
+            publish_status_label = "ОПУБЛИКОВАНО"
+            base_title = embed.title or "Отчёт"
+            title_without_status = base_title.split("[", 1)[0].strip()
+            embed.title = f"{publish_title_prefix} {title_without_status} [{publish_status_label}]"
+            embed.color = discord.Color.gold()
+
             preserved_fields = [
                 field for field in embed.fields if field.name != "Статус публикации"
             ]
@@ -389,14 +436,16 @@ class PublishDecisionView(discord.ui.View):
             for field in preserved_fields:
                 embed.add_field(name=field.name, value=field.value, inline=field.inline)
             embed.add_field(
-                name="Статус публикации",
-                value="Отмечено как нужно опубликовать",
-                inline=False,
+                name="Статус публикации", value="Опубликовано", inline=False
             )
 
-            await interaction.message.edit(embed=embed, view=self)
+            content = f"<@&{config.PROJECT_MANAGER_ROLE_ID}> <@&{config.CEO_ROLE_ID}>"
+            await post_channel.send(content=content, embed=embed)
+
+            disabled_view = PublishDecisionView(disabled=True)
+            await interaction.message.edit(embed=embed, view=disabled_view)
             await interaction.response.send_message(
-                "Задача на публикацию отмечена. Финальная логика публикации будет настроена позже.",
+                "Отчёт отмечен как опубликованный и отправлен в канал post-done.",
                 ephemeral=True,
             )
         except Exception:

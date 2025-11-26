@@ -278,6 +278,37 @@ class ShootingDecisionModal(discord.ui.Modal):
                     except Exception:
                         log.warning("Не удалось отправить DM автору", exc_info=True)
 
+            if self.status == "rejected":
+                d1_channel = interaction.client.get_channel(config.HIGH_STAFF_CHANNEL_ID)
+                if isinstance(d1_channel, discord.TextChannel):
+                    error_embed = discord.Embed(
+                        title="❌ Отклонённый отчёт по съёмке",
+                        color=discord.Color.dark_red(),
+                        timestamp=discord.utils.utcnow(),
+                    )
+                    for field in embed.fields:
+                        if field.name == "Статус":
+                            continue
+                        error_embed.add_field(
+                            name=field.name, value=field.value, inline=field.inline
+                        )
+                    error_embed.add_field(
+                        name="Комментарий",
+                        value=comment_value or "нет комментария",
+                        inline=False,
+                    )
+                    error_embed.add_field(
+                        name="Отклонил",
+                        value=f"{self.reviewer} (ID: {self.reviewer.id})",
+                        inline=False,
+                    )
+                    error_embed.add_field(
+                        name="Ссылка на отчёт", value=interaction.message.jump_url, inline=False
+                    )
+
+                    content = f"<@&{config.PROJECT_MANAGER_ROLE_ID}> <@&{config.CEO_ROLE_ID}>"
+                    await d1_channel.send(content=content, embed=error_embed)
+
             # Forward to editing if accepted or mixed
             if self.status in {"accepted", "mixed"}:
                 editing_channel = interaction.client.get_channel(config.EDITING_REPORT_CHANNEL_ID)
