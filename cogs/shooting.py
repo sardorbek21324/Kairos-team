@@ -32,8 +32,9 @@ def extract_author_id_from_embed(embed: discord.Embed) -> Optional[int]:
 
 
 class ShootingPanelView(discord.ui.View):
-    def __init__(self, *, timeout: Optional[float] = None):
-        super().__init__(timeout=timeout)
+    def __init__(self):
+        # Persistent view so the button keeps working after restarts
+        super().__init__(timeout=None)
 
     @discord.ui.button(
         label="Отправить отчёт по съёмке",
@@ -41,18 +42,31 @@ class ShootingPanelView(discord.ui.View):
         custom_id="shooting_panel_submit",
     )
     async def open_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        member = interaction.user
-        if not isinstance(member, discord.Member):
-            await interaction.response.send_message(
-                "Не удалось получить данные пользователя.", ephemeral=True
-            )
-            return
-        if not has_any_role(member, (config.OPERATOR_ROLE_ID, config.CEO_ROLE_ID)):
-            await interaction.response.send_message(
-                "У вас нет прав для отправки этого отчёта.", ephemeral=True
-            )
-            return
-        await interaction.response.send_modal(ShootingReportModal(author=member))
+        try:
+            member = interaction.user
+            if not isinstance(member, discord.Member):
+                await interaction.response.send_message(
+                    "Не удалось получить данные пользователя.", ephemeral=True
+                )
+                return
+            if not has_any_role(member, (config.OPERATOR_ROLE_ID, config.CEO_ROLE_ID)):
+                await interaction.response.send_message(
+                    "У вас нет прав для отправки этого отчёта.", ephemeral=True
+                )
+                return
+            await interaction.response.send_modal(ShootingReportModal(author=member))
+        except Exception:
+            log.exception("Failed to open shooting report modal")
+            if interaction.response.is_done():
+                await interaction.followup.send(
+                    "Не удалось открыть форму отчёта. Попробуйте ещё раз.",
+                    ephemeral=True,
+                )
+            else:
+                await interaction.response.send_message(
+                    "Не удалось открыть форму отчёта. Попробуйте ещё раз.",
+                    ephemeral=True,
+                )
 
 
 class ShootingReportModal(discord.ui.Modal, title="Отправка отчёта по съёмке"):
