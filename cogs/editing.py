@@ -51,6 +51,45 @@ class EditingPanelView(discord.ui.View):
         await interaction.response.send_modal(EditingReportModal(author=member))
 
 
+class FinishMontageView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="Завершить монтаж",
+        style=discord.ButtonStyle.primary,
+        custom_id="finish_montage_button",
+    )
+    async def finish_montage_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        try:
+            member = interaction.user
+            if not isinstance(member, discord.Member):
+                await interaction.response.send_message(
+                    "Не удалось получить данные пользователя.", ephemeral=True
+                )
+                return
+
+            if not member.get_role(config.EDITOR_ROLE_ID):
+                await interaction.response.send_message(
+                    "Только монтажёр может завершить монтаж.", ephemeral=True
+                )
+                return
+
+            await interaction.response.send_modal(EditingReportModal(author=member))
+        except Exception:
+            log.exception("Failed to open editing report modal from finish button")
+            if interaction.response.is_done():
+                await interaction.followup.send(
+                    "Не удалось открыть форму. Попробуйте ещё раз.", ephemeral=True
+                )
+            else:
+                await interaction.response.send_message(
+                    "Не удалось открыть форму. Попробуйте ещё раз.", ephemeral=True
+                )
+
+
 class EditingReportModal(discord.ui.Modal, title="Отправка отчёта по монтажу"):
     def __init__(self, author: discord.Member):
         super().__init__(timeout=None)
@@ -136,7 +175,7 @@ class EditingReportModal(discord.ui.Modal, title="Отправка отчёта 
                 return
 
             view = EditingDecisionView()
-            content = f"<@&{config.CEO_ROLE_ID}>"
+            content = f"<@&{config.CEO_ROLE_ID}> <@&{config.PROJECT_MANAGER_ROLE_ID}>"
 
             await review_channel.send(content=content, embed=embed, view=view)
             await interaction.response.send_message(
@@ -226,14 +265,28 @@ class EditingDecisionModal(discord.ui.Modal):
                 user = interaction.client.get_user(author_id) or await interaction.client.fetch_user(author_id)
                 if user:
                     try:
+                        publish_note = (
+                            " Ролики переданы в блок Публикации." if self.status == "accepted" else ""
+                        )
                         await user.send(
                             "Ваш отчёт по монтажу был обработан.\n"
-                            f"Статус: {status_label}.\n"
+                            f"Статус: {status_label}.{publish_note}\n"
                             f"Комментарий ревьюера: {comment_value}.\n"
                             f"Ссылка на отчёт: {interaction.message.jump_url}"
                         )
                     except Exception:
                         log.warning("Не удалось отправить DM автору", exc_info=True)
+
+            if self.status == "accepted":
+                publish_channel = interaction.client.get_channel(config.PUBLISH_REPORT_CHANNEL_ID)
+                if not isinstance(publish_channel, discord.TextChannel):
+                    log.error("Publish report channel not found when forwarding editing report")
+                    return
+
+                publish_embed = discord.Embed.from_dict(embed.to_dict())
+                view = PublishDecisionView()
+                content = f"<@&{config.STAFF_ROLE_ID}>"
+                await publish_channel.send(content=content, embed=publish_embed, view=view)
         except Exception:
             log.exception("Error while processing editing decision")
             if interaction.response.is_done():
@@ -283,7 +336,9 @@ class EditingDecisionView(discord.ui.View):
                 "Не удалось получить данные пользователя.", ephemeral=True
             )
             return
-        if not member.get_role(config.CEO_ROLE_ID):
+        if not has_any_role(
+            member, (config.CEO_ROLE_ID, config.PROJECT_MANAGER_ROLE_ID)
+        ):
             await interaction.response.send_message(
                 "У вас нет прав для этого действия.", ephemeral=True
             )
@@ -291,6 +346,69 @@ class EditingDecisionView(discord.ui.View):
         await interaction.response.send_modal(
             EditingDecisionModal(status=status, require_comment=require_comment, reviewer=member)
         )
+
+
+class PublishDecisionView(discord.ui.View):
+    def __init__(self, *, timeout: Optional[float] = None):
+        super().__init__(timeout=timeout)
+
+    @discord.ui.button(
+        label="Нужно опубликовать",
+        style=discord.ButtonStyle.primary,
+        custom_id="publish_needed_button",
+    )
+    async def publish_needed_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        try:
+            member = interaction.user
+            if not isinstance(member, discord.Member):
+                await interaction.response.send_message(
+                    "Не удалось получить данные пользователя.", ephemeral=True
+                )
+                return
+
+            if not has_any_role(member, (config.STAFF_ROLE_ID, config.CEO_ROLE_ID)):
+                await interaction.response.send_message(
+                    "Отметить публикацию могут только Staff или CEO.",
+                    ephemeral=True,
+                )
+                return
+
+            if not interaction.message or not interaction.message.embeds:
+                await interaction.response.send_message(
+                    "Исходное сообщение не найдено.", ephemeral=True
+                )
+                return
+
+            embed = discord.Embed.from_dict(interaction.message.embeds[0].to_dict())
+            preserved_fields = [
+                field for field in embed.fields if field.name != "Статус публикации"
+            ]
+            embed.clear_fields()
+            for field in preserved_fields:
+                embed.add_field(name=field.name, value=field.value, inline=field.inline)
+            embed.add_field(
+                name="Статус публикации",
+                value="Отмечено как нужно опубликовать",
+                inline=False,
+            )
+
+            await interaction.message.edit(embed=embed, view=self)
+            await interaction.response.send_message(
+                "Задача на публикацию отмечена. Финальная логика публикации будет настроена позже.",
+                ephemeral=True,
+            )
+        except Exception:
+            log.exception("Failed to mark publish needed")
+            if interaction.response.is_done():
+                await interaction.followup.send(
+                    "Не удалось обновить статус публикации.", ephemeral=True
+                )
+            else:
+                await interaction.response.send_message(
+                    "Не удалось обновить статус публикации.", ephemeral=True
+                )
 
 
 class EditingReportsCog(commands.Cog):

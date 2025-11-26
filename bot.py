@@ -8,7 +8,13 @@ from discord.ext import commands
 
 import config
 from cogs.shooting import ShootingReportsCog, ShootingPanelView, ShootingDecisionView
-from cogs.editing import EditingReportsCog, EditingPanelView, EditingDecisionView
+from cogs.editing import (
+    EditingDecisionView,
+    EditingPanelView,
+    EditingReportsCog,
+    FinishMontageView,
+    PublishDecisionView,
+)
 from cogs.setup_panels import PanelSetupCog
 from cogs.diagnostics import DiagnosticsCog
 
@@ -30,6 +36,8 @@ def create_bot() -> commands.Bot:
         bot.add_view(ShootingDecisionView())
         bot.add_view(EditingPanelView())
         bot.add_view(EditingDecisionView())
+        bot.add_view(FinishMontageView())
+        bot.add_view(PublishDecisionView())
 
         await bot.add_cog(ShootingReportsCog(bot))
         await bot.add_cog(EditingReportsCog(bot))
