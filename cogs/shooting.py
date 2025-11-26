@@ -9,6 +9,7 @@ from discord import app_commands
 from discord.ext import commands
 
 import config
+from cogs.editing import FinishMontageView
 
 log = logging.getLogger(__name__)
 
@@ -75,23 +76,23 @@ class ShootingReportModal(discord.ui.Modal, title="Отправка отчёта
         self.author = author
 
         self.date_field = discord.ui.TextInput(
-            label="Когда была съемка?",
+            label="Когда была съёмка?",
             placeholder="YYYY-MM-DD",
             required=True,
             custom_id="shooting_date",
         )
         self.location_field = discord.ui.TextInput(
-            label="Где была съемка?",
+            label="Где была съёмка?",
             required=True,
             custom_id="shooting_location",
         )
         self.count_field = discord.ui.TextInput(
-            label="Сколько видео было снято?",
+            label="Сколько видео сняли?",
             required=True,
             custom_id="shooting_count",
         )
         self.drive_field = discord.ui.TextInput(
-            label="Ссылка на Google-файл",
+            label="Ссылка на материалы (Google Диск)",
             required=True,
             custom_id="shooting_drive_link",
         )
@@ -265,14 +266,41 @@ class ShootingDecisionModal(discord.ui.Modal):
                 user = interaction.client.get_user(author_id) or await interaction.client.fetch_user(author_id)
                 if user:
                     try:
+                        forward_note = (
+                            " Видео передано в монтаж." if self.status in {"accepted", "mixed"} else ""
+                        )
                         await user.send(
                             "Ваш отчёт по съёмке был обработан.\n"
-                            f"Статус: {status_label}.\n"
+                            f"Статус: {status_label}.{forward_note}\n"
                             f"Комментарий ревьюера: {comment_value}.\n"
                             f"Ссылка на отчёт: {interaction.message.jump_url}"
                         )
                     except Exception:
                         log.warning("Не удалось отправить DM автору", exc_info=True)
+
+            # Forward to editing if accepted or mixed
+            if self.status in {"accepted", "mixed"}:
+                editing_channel = interaction.client.get_channel(config.EDITING_REPORT_CHANNEL_ID)
+                if not isinstance(editing_channel, discord.TextChannel):
+                    log.error("Editing report channel not found when forwarding shooting report")
+                    return
+
+                editing_embed = discord.Embed.from_dict(embed.to_dict())
+                existing_fields = [
+                    field for field in editing_embed.fields if field.name != "Статус монтажа"
+                ]
+                editing_embed.clear_fields()
+                for field in existing_fields:
+                    editing_embed.add_field(
+                        name=field.name, value=field.value, inline=field.inline
+                    )
+                editing_embed.add_field(
+                    name="Статус монтажа", value="В монтаже", inline=False
+                )
+
+                view = FinishMontageView()
+                content = f"<@&{config.EDITOR_ROLE_ID}>"
+                await editing_channel.send(content=content, embed=editing_embed, view=view)
         except Exception:
             log.exception("Error while processing shooting decision")
             if interaction.response.is_done():
