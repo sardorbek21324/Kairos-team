@@ -40,6 +40,7 @@ def create_bot() -> commands.Bot:
             if config.COMMAND_GUILD_IDS:
                 for guild_id in config.COMMAND_GUILD_IDS:
                     guild = discord.Object(id=guild_id)
+                    bot.tree.copy_global_to(guild=guild)
                     await bot.tree.sync(guild=guild)
                     log.info("Synced commands for guild %s", guild_id)
             else:
