@@ -267,7 +267,7 @@ class ShootingDecisionModal(discord.ui.Modal):
                 if user:
                     try:
                         forward_note = (
-                            " Видео передано в монтаж." if self.status in {"accepted", "mixed"} else ""
+                            " (передано в монтаж)" if self.status in {"accepted", "mixed"} else ""
                         )
                         decision_timestamp = discord.utils.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
@@ -289,19 +289,19 @@ class ShootingDecisionModal(discord.ui.Modal):
                         examples_link = get_field_value("Примеры роликов")
 
                         await user.send(
-                            "Ваш отчёт по съёмке был обработан.\n"
-                            f"📅 Отправлено: {report_timestamp}\n"
-                            f"🕰 Решение вынесено: {decision_timestamp}\n"
-                            "🎬 Тип отчёта: Съёмка\n"
-                            f"🗓 Дата съёмки: {shooting_date}\n"
-                            f"📍 Локация: {location}\n"
-                            f"🎞 Количество видео: {video_count}\n"
-                            f"📂 Google-диск: {drive_link}\n"
-                            f"🎯 Примеры роликов: {examples_link}\n"
-                            f"⚖️ Статус: {status_label}.{forward_note}\n"
-                            f"👤 Ревьюер: {self.reviewer} (ID: {self.reviewer.id})\n"
-                            f"💬 Комментарий ревьюера: {comment_value}\n"
-                            f"🔗 Ссылка на отчёт: {interaction.message.jump_url}"
+                            "Обновление по вашему отчёту.\n"
+                            f"Отправлено: {report_timestamp}\n"
+                            f"Решение: {status_label}{forward_note}\n"
+                            "Тип: Съёмка\n"
+                            f"Дата съёмки: {shooting_date}\n"
+                            f"Локация: {location}\n"
+                            f"Количество видео: {video_count}\n"
+                            f"Google-диск: {drive_link}\n"
+                            f"Примеры роликов: {examples_link}\n"
+                            f"Решение вынесено: {decision_timestamp}\n"
+                            f"Ревьюер: {self.reviewer} (ID: {self.reviewer.id})\n"
+                            f"Комментарий ревьюера: {comment_value}\n"
+                            f"Ссылка на отчёт: {interaction.message.jump_url}"
                         )
                     except Exception:
                         log.warning("Не удалось отправить DM автору", exc_info=True)
