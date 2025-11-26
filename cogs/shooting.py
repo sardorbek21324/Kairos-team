@@ -269,11 +269,39 @@ class ShootingDecisionModal(discord.ui.Modal):
                         forward_note = (
                             " Видео передано в монтаж." if self.status in {"accepted", "mixed"} else ""
                         )
+                        decision_timestamp = discord.utils.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+                        def get_field_value(name: str) -> str:
+                            for field in embed.fields:
+                                if field.name == name:
+                                    return field.value
+                            return "—"
+
+                        report_timestamp = (
+                            embed.timestamp.strftime("%Y-%m-%d %H:%M UTC")
+                            if embed.timestamp
+                            else "—"
+                        )
+                        shooting_date = get_field_value("Дата съёмки")
+                        location = get_field_value("Локация")
+                        video_count = get_field_value("Количество видео")
+                        drive_link = get_field_value("Google-диск")
+                        examples_link = get_field_value("Примеры роликов")
+
                         await user.send(
                             "Ваш отчёт по съёмке был обработан.\n"
-                            f"Статус: {status_label}.{forward_note}\n"
-                            f"Комментарий ревьюера: {comment_value}.\n"
-                            f"Ссылка на отчёт: {interaction.message.jump_url}"
+                            f"📅 Отправлено: {report_timestamp}\n"
+                            f"🕰 Решение вынесено: {decision_timestamp}\n"
+                            "🎬 Тип отчёта: Съёмка\n"
+                            f"🗓 Дата съёмки: {shooting_date}\n"
+                            f"📍 Локация: {location}\n"
+                            f"🎞 Количество видео: {video_count}\n"
+                            f"📂 Google-диск: {drive_link}\n"
+                            f"🎯 Примеры роликов: {examples_link}\n"
+                            f"⚖️ Статус: {status_label}.{forward_note}\n"
+                            f"👤 Ревьюер: {self.reviewer} (ID: {self.reviewer.id})\n"
+                            f"💬 Комментарий ревьюера: {comment_value}\n"
+                            f"🔗 Ссылка на отчёт: {interaction.message.jump_url}"
                         )
                     except Exception:
                         log.warning("Не удалось отправить DM автору", exc_info=True)

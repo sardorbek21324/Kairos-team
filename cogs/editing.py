@@ -268,11 +268,37 @@ class EditingDecisionModal(discord.ui.Modal):
                         publish_note = (
                             " Ролики переданы в блок Публикации." if self.status == "accepted" else ""
                         )
+                        decision_timestamp = discord.utils.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+
+                        def get_field_value(name: str) -> str:
+                            for field in embed.fields:
+                                if field.name == name:
+                                    return field.value
+                            return "—"
+
+                        report_timestamp = (
+                            embed.timestamp.strftime("%Y-%m-%d %H:%M UTC")
+                            if embed.timestamp
+                            else "—"
+                        )
+                        project = get_field_value("Проект / компания")
+                        video_count = get_field_value("Количество роликов")
+                        drive_link = get_field_value("Google-диск")
+                        author_comment = get_field_value("Комментарий")
+
                         await user.send(
                             "Ваш отчёт по монтажу был обработан.\n"
-                            f"Статус: {status_label}.{publish_note}\n"
-                            f"Комментарий ревьюера: {comment_value}.\n"
-                            f"Ссылка на отчёт: {interaction.message.jump_url}"
+                            f"📅 Отправлено: {report_timestamp}\n"
+                            f"🕰 Решение вынесено: {decision_timestamp}\n"
+                            "🎞 Тип отчёта: Монтаж\n"
+                            f"🏷 Проект / компания: {project}\n"
+                            f"🔢 Количество роликов: {video_count}\n"
+                            f"📂 Google-диск: {drive_link}\n"
+                            f"📝 Комментарий автора: {author_comment}\n"
+                            f"⚖️ Статус: {status_label}.{publish_note}\n"
+                            f"👤 Ревьюер: {self.reviewer} (ID: {self.reviewer.id})\n"
+                            f"💬 Комментарий ревьюера: {comment_value}\n"
+                            f"🔗 Ссылка на отчёт: {interaction.message.jump_url}"
                         )
                     except Exception:
                         log.warning("Не удалось отправить DM автору", exc_info=True)
