@@ -10,6 +10,7 @@ import config
 from cogs.shooting import ShootingReportsCog, ShootingPanelView, ShootingDecisionView
 from cogs.editing import EditingReportsCog, EditingPanelView, EditingDecisionView
 from cogs.setup_panels import PanelSetupCog
+from cogs.diagnostics import DiagnosticsCog
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ def create_bot() -> commands.Bot:
         await bot.add_cog(ShootingReportsCog(bot))
         await bot.add_cog(EditingReportsCog(bot))
         await bot.add_cog(PanelSetupCog(bot))
+        await bot.add_cog(DiagnosticsCog(bot))
 
         try:
             if config.COMMAND_GUILD_IDS:
