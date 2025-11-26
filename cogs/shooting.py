@@ -101,20 +101,12 @@ class ShootingReportModal(discord.ui.Modal, title="Отправка отчёта
             custom_id="shooting_examples",
             style=discord.TextStyle.long,
         )
-        self.comment_field = discord.ui.TextInput(
-            label="Комментарий",
-            required=False,
-            custom_id="shooting_comment",
-            style=discord.TextStyle.long,
-        )
-
         for item in (
             self.date_field,
             self.location_field,
             self.count_field,
             self.drive_field,
             self.examples_field,
-            self.comment_field,
         ):
             self.add_item(item)
 
@@ -161,8 +153,6 @@ class ShootingReportModal(discord.ui.Modal, title="Отправка отчёта
             )
             embed.add_field(name="Google-диск", value=drive_link, inline=False)
             embed.add_field(name="Примеры роликов", value=self.examples_field.value, inline=False)
-            if self.comment_field.value:
-                embed.add_field(name="Комментарий", value=self.comment_field.value, inline=False)
             embed.set_footer(
                 text=f"Автор отчёта: {interaction.user} (ID: {interaction.user.id})"
             )
