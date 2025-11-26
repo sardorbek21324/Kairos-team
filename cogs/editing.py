@@ -52,8 +52,9 @@ class EditingPanelView(discord.ui.View):
 
 
 class FinishMontageView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
+    def __init__(self, *, timeout: Optional[float] = None, disabled: bool = False):
+        super().__init__(timeout=timeout)
+        self.finish_montage_button.disabled = disabled
 
     @discord.ui.button(
         label="Завершить монтаж",
@@ -77,7 +78,9 @@ class FinishMontageView(discord.ui.View):
                 )
                 return
 
-            await interaction.response.send_modal(EditingReportModal(author=member))
+            await interaction.response.send_modal(
+                EditingReportModal(author=member, source_message=interaction.message)
+            )
         except Exception:
             log.exception("Failed to open editing report modal from finish button")
             if interaction.response.is_done():
@@ -91,9 +94,12 @@ class FinishMontageView(discord.ui.View):
 
 
 class EditingReportModal(discord.ui.Modal, title="Отправка отчёта по монтажу"):
-    def __init__(self, author: discord.Member):
+    def __init__(
+        self, *, author: discord.Member, source_message: Optional[discord.Message] = None
+    ):
         super().__init__(timeout=None)
         self.author = author
+        self.source_message = source_message
 
         self.project_field = discord.ui.TextInput(
             label="Куда это видео?",
@@ -181,6 +187,37 @@ class EditingReportModal(discord.ui.Modal, title="Отправка отчёта 
             await interaction.response.send_message(
                 "✅ Ваш отчёт по монтажу отправлен на проверку.", ephemeral=True
             )
+
+            if self.source_message:
+                try:
+                    original_embed = None
+                    if self.source_message.embeds:
+                        original_embed = discord.Embed.from_dict(
+                            self.source_message.embeds[0].to_dict()
+                        )
+                    if original_embed:
+                        preserved_fields = [
+                            field
+                            for field in original_embed.fields
+                            if field.name != "Статус монтажа"
+                        ]
+                        original_embed.clear_fields()
+                        for field in preserved_fields:
+                            original_embed.add_field(
+                                name=field.name, value=field.value, inline=field.inline
+                            )
+                        original_embed.add_field(
+                            name="Статус монтажа",
+                            value="Отправлено на проверку",
+                            inline=False,
+                        )
+
+                        disabled_view = FinishMontageView(disabled=True)
+                        await self.source_message.edit(
+                            embed=original_embed, view=disabled_view
+                        )
+                except Exception:
+                    log.exception("Failed to update source message after montage finish")
         except Exception:
             log.exception("Error while submitting editing report")
             if interaction.response.is_done():
