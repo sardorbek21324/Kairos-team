@@ -32,6 +32,8 @@ class PanelSetupCog(commands.Cog):
             )
             return
 
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
         results: list[str] = []
         failures: list[str] = []
 
@@ -81,10 +83,7 @@ class PanelSetupCog(commands.Cog):
         if not message_lines:
             message_lines.append("Не удалось отправить панели. Проверьте настройки каналов.")
 
-        if interaction.response.is_done():
-            await interaction.followup.send("\n".join(message_lines), ephemeral=True)
-        else:
-            await interaction.response.send_message("\n".join(message_lines), ephemeral=True)
+        await interaction.followup.send("\n".join(message_lines), ephemeral=True)
 
     async def _send_panel(
         self,
