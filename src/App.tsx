@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import FloatingCallButton from './components/FloatingCallButton';
 import Home from './pages/Home';
 import Services from './pages/Services';
 import Portfolio from './pages/Portfolio';
@@ -21,7 +22,7 @@ function AppContent() {
       <div className="fixed inset-0 noise opacity-[0.03] pointer-events-none z-[100]" />
       <ScrollToTop />
       <Header />
-      <main className="flex-grow">
+      <main className="flex-grow pb-20 sm:pb-24 md:pb-0">
         <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: isChanging ? 0 : 1 }}
@@ -38,6 +39,7 @@ function AppContent() {
           </Routes>
         </motion.div>
       </main>
+      <FloatingCallButton />
       <Footer />
     </div>
   );
