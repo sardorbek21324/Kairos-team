@@ -4,7 +4,6 @@ import { ReactNode } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
-import FloatingCallButton from './components/FloatingCallButton';
 import Home from './pages/Home';
 import Services from './pages/Services';
 import Portfolio from './pages/Portfolio';
@@ -39,7 +38,6 @@ function AppContent() {
           </Routes>
         </motion.div>
       </main>
-      <FloatingCallButton />
       <Footer />
     </div>
   );
