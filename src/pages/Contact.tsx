@@ -7,12 +7,35 @@ export default function Contact() {
   const { t } = useLanguage();
   const [status, setStatus] = useState('');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setStatus('Opening email client...');
-    setTimeout(() => {
+
+    const formData = new FormData(e.currentTarget);
+    const payload = {
+      name: String(formData.get('name') ?? ''),
+      email: String(formData.get('email') ?? ''),
+      message: String(formData.get('message') ?? ''),
+    };
+
+    try {
+      setStatus('Sending...');
+      const response = await fetch(`${import.meta.env.VITE_LEADS_API_URL}/lead`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send lead');
+      }
+
       setStatus('Done.');
-    }, 1000);
+      e.currentTarget.reset();
+    } catch {
+      setStatus('Failed. Please try again.');
+    }
   };
 
   return (
@@ -48,6 +71,7 @@ export default function Contact() {
                   <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">{t('contact.audit.labels.name')}</label>
                     <input 
+                      name="name"
                       required
                       className="w-full px-7 py-5 rounded-2xl bg-white/5 border border-white/10 focus:border-brand-accent focus:bg-white/10 transition-all outline-none font-bold text-white placeholder:text-slate-700"
                       placeholder={t('contact.audit.labels.namePlaceholder')}
@@ -56,6 +80,7 @@ export default function Contact() {
                   <div className="space-y-3">
                     <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">{t('contact.audit.labels.email')}</label>
                     <input 
+                      name="email"
                       required
                       type="email"
                       className="w-full px-7 py-5 rounded-2xl bg-white/5 border border-white/10 focus:border-brand-accent focus:bg-white/10 transition-all outline-none font-bold text-white placeholder:text-slate-700"
@@ -73,6 +98,7 @@ export default function Contact() {
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">{t('contact.audit.labels.message')}</label>
                   <textarea 
+                    name="message"
                     required
                     rows={4}
                     className="w-full px-7 py-5 rounded-2xl bg-white/5 border border-white/10 focus:border-brand-accent focus:bg-white/10 transition-all outline-none font-bold text-white placeholder:text-slate-700 resize-none"
