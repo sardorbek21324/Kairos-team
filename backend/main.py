@@ -8,6 +8,7 @@ from urllib import request as urllib_request
 from urllib.error import URLError
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 app = FastAPI()
@@ -101,7 +102,7 @@ def health() -> dict[str, str]:
 
 
 @app.post("/lead")
-def submit_lead(payload: LeadRequest, request: Request) -> dict[str, bool]:
+def submit_lead(payload: LeadRequest, request: Request) -> JSONResponse:
     if "@" not in payload.email:
         raise HTTPException(status_code=422, detail="Invalid email")
     _require_allowed_origin(request)
@@ -128,10 +129,16 @@ def submit_lead(payload: LeadRequest, request: Request) -> dict[str, bool]:
     try:
         with urllib_request.urlopen(telegram_request, timeout=10) as response:
             response_body = json.loads(response.read().decode("utf-8"))
-    except URLError as exc:
-        raise HTTPException(status_code=502, detail="Failed to deliver message") from exc
+    except (URLError, json.JSONDecodeError):
+        return JSONResponse(
+            status_code=502,
+            content={"ok": False, "error": "telegram_send_failed"},
+        )
 
     if not response_body.get("ok"):
-        raise HTTPException(status_code=502, detail="Failed to deliver message")
+        return JSONResponse(
+            status_code=502,
+            content={"ok": False, "error": "telegram_send_failed"},
+        )
 
-    return {"ok": True}
+    return JSONResponse(status_code=200, content={"ok": True})
