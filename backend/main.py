@@ -7,9 +7,27 @@ import json
 from urllib import request as urllib_request
 from urllib.error import URLError
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 app = FastAPI()
+
+
+def _csv_env(name: str) -> list[str]:
+    raw = os.getenv(name, "")
+    return [x.strip() for x in raw.split(",") if x.strip()]
+
+
+origins = _csv_env("ALLOWED_ORIGINS")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=False,
+    allow_methods=["POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+    max_age=86400,
+)
 
 DEFAULT_TARGET_CHAT_ID = "-1003882605920"
 
