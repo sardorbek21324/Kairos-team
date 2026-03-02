@@ -36,6 +36,8 @@ DEFAULT_TARGET_CHAT_ID = "-1003882605920"
 class LeadRequest(BaseModel):
     name: str = Field(min_length=1)
     email: str = Field(min_length=3)
+    link: str | None = None
+    company: str | None = None
     message: str = Field(min_length=1)
 
 
@@ -112,11 +114,13 @@ def submit_lead(payload: LeadRequest, request: Request) -> JSONResponse:
     token = _get_bot_token()
     target_chat_id = _get_target_chat_id()
 
+    link_value = payload.link or payload.company
     text = (
         "📩 New lead\n"
         f"Name: {payload.name}\n"
         f"Email: {payload.email}\n"
-        f"Message: {payload.message}"
+        + (f"Link: {link_value}\n" if link_value else "")
+        + f"Message: {payload.message}"
     )
 
     telegram_request = urllib_request.Request(
