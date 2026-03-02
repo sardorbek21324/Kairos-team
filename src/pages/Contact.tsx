@@ -10,11 +10,16 @@ export default function Contact() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (status === 'Sending...') {
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     const payload = {
       name: String(formData.get('name') ?? ''),
       email: String(formData.get('email') ?? ''),
       message: String(formData.get('message') ?? ''),
+      link: String(formData.get('link') ?? ''),
     };
 
     try {
@@ -29,6 +34,17 @@ export default function Contact() {
 
       if (!response.ok) {
         throw new Error('Failed to send lead');
+      }
+
+      let responseJson: { ok?: boolean } | null = null;
+      try {
+        responseJson = await response.json();
+      } catch {
+        responseJson = null;
+      }
+
+      if (responseJson?.ok === false) {
+        throw new Error('Lead endpoint returned ok=false');
       }
 
       setStatus('Done.');
@@ -91,6 +107,7 @@ export default function Contact() {
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">{t('contact.audit.labels.company')}</label>
                   <input 
+                    name="link"
                     className="w-full px-7 py-5 rounded-2xl bg-white/5 border border-white/10 focus:border-brand-accent focus:bg-white/10 transition-all outline-none font-bold text-white placeholder:text-slate-700"
                     placeholder={t('contact.audit.labels.companyPlaceholder')}
                   />
@@ -106,7 +123,10 @@ export default function Contact() {
                   />
                 </div>
                 <div className="flex items-center gap-8 pt-4">
-                  <button className="bg-brand-accent text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-600 transition-all shadow-xl shadow-brand-accent/20 flex items-center gap-3">
+                  <button
+                    disabled={status === 'Sending...'}
+                    className="bg-brand-accent text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-600 transition-all shadow-xl shadow-brand-accent/20 flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
                     {t('contact.audit.labels.send')} <Send size={16} />
                   </button>
                   {status && <span className="text-sm font-black uppercase tracking-widest text-brand-accent">{status}</span>}

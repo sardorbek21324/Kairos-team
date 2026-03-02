@@ -5,7 +5,7 @@ from typing import Deque, Dict
 
 import json
 from urllib import request as urllib_request
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -105,44 +105,63 @@ def health() -> dict[str, str]:
 
 @app.post("/lead")
 def submit_lead(payload: LeadRequest, request: Request) -> JSONResponse:
-    if "@" not in payload.email:
-        raise HTTPException(status_code=422, detail="Invalid email")
+    if '@' not in payload.email:
+        raise HTTPException(status_code=422, detail='Invalid email')
     _require_allowed_origin(request)
     client_ip = _get_client_ip(request)
     _check_rate_limit(client_ip)
-
-    token = _get_bot_token()
-    target_chat_id = _get_target_chat_id()
-
-    link_value = payload.link or payload.company
-    text = (
-        "📩 New lead\n"
-        f"Name: {payload.name}\n"
-        f"Email: {payload.email}\n"
-        + (f"Link: {link_value}\n" if link_value else "")
-        + f"Message: {payload.message}"
-    )
-
-    telegram_request = urllib_request.Request(
-        f"https://api.telegram.org/bot{token}/sendMessage",
-        data=json.dumps({"chat_id": target_chat_id, "text": text}).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-
     try:
+        token = _get_bot_token()
+        target_chat_id = _get_target_chat_id()
+
+        raw_link = payload.link if payload.link is not None else payload.company
+        normalized_link = raw_link.strip() if raw_link else None
+        company_or_link = normalized_link or "—"
+
+        text = (
+            "📩 New lead\n"
+            f"Name: {payload.name}\n"
+            f"Email: {payload.email}\n"
+            f"Company/Link: {company_or_link}\n"
+            f"Message: {payload.message}"
+        )
+
+        telegram_request = urllib_request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=json.dumps({"chat_id": target_chat_id, "text": text}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
         with urllib_request.urlopen(telegram_request, timeout=10) as response:
+            if response.status != 200:
+                return JSONResponse(
+                    status_code=502,
+                    content={"ok": False, "error": "telegram_send_failed"},
+                )
             response_body = json.loads(response.read().decode("utf-8"))
-    except (URLError, json.JSONDecodeError):
+
+        if not response_body.get("ok"):
+            return JSONResponse(
+                status_code=502,
+                content={"ok": False, "error": "telegram_send_failed"},
+            )
+
+        return JSONResponse(status_code=200, content={"ok": True})
+    except (HTTPError, URLError, json.JSONDecodeError):
         return JSONResponse(
             status_code=502,
             content={"ok": False, "error": "telegram_send_failed"},
         )
-
-    if not response_body.get("ok"):
+    except HTTPException as exc:
+        if exc.status_code == 500:
+            return JSONResponse(
+                status_code=500,
+                content={'ok': False, 'error': 'internal_error'},
+            )
+        raise
+    except Exception:
         return JSONResponse(
-            status_code=502,
-            content={"ok": False, "error": "telegram_send_failed"},
+            status_code=500,
+            content={"ok": False, "error": "internal_error"},
         )
-
-    return JSONResponse(status_code=200, content={"ok": True})
