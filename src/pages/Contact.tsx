@@ -155,7 +155,7 @@ export default function Contact() {
               </div>
               <div className="flex flex-col gap-4">
                 <a 
-                  href="https://calendly.com/cerbius/working" 
+                  href="https://calendly.com/cerbius/working?month=2026-03&duration=60" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="w-full bg-brand-dark text-white py-5 rounded-2xl text-center font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl"
