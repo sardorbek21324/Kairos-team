@@ -10,6 +10,21 @@
 
       gtag('config', 'AW-17987476386');
     </script>
+    <!-- Event snippet for Contact (1) conversion page -->
+    <script>
+      function gtag_report_conversion(url) {
+        var callback = function () {
+          if (typeof(url) != 'undefined') {
+            window.location = url;
+          }
+        };
+        gtag('event', 'conversion', {
+            'send_to': 'AW-17987476386/AfyYCKa_i4IcEKK3jIFD',
+            'event_callback': callback
+        });
+        return false;
+      }
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kairos Team</title>
