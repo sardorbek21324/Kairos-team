@@ -164,6 +164,14 @@ export default function Contact() {
                 </a>
                 <a 
                   href="tel:+48503413651"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (typeof window !== 'undefined' && (window as any).gtag_report_conversion) {
+                      (window as any).gtag_report_conversion('tel:+48503413651');
+                    } else {
+                      window.location.href = 'tel:+48503413651';
+                    }
+                  }}
                   className="w-full bg-slate-100 text-brand-dark py-5 rounded-2xl text-center font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all flex items-center justify-center gap-3"
                 >
                   <Phone size={18} /> {t('contact.book.btns.call')}
