@@ -1,13 +1,35 @@
+import type { MouseEvent } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, CheckCircle2, Play, Zap, BarChart3, Target, Rocket } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Play, Zap, BarChart3, Target, Rocket, Phone } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { Link } from 'react-router-dom';
 
 export default function Home() {
   const { t } = useLanguage();
+  const phoneHref = 'tel:+48503413651';
+
+  const handleCallClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+
+    if (typeof window !== 'undefined' && (window as any).gtag_report_conversion) {
+      (window as any).gtag_report_conversion(phoneHref);
+      return;
+    }
+
+    window.location.href = phoneHref;
+  };
 
   return (
     <div className="pt-20">
+      <a
+        href={phoneHref}
+        onClick={handleCallClick}
+        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-2xl bg-brand-accent px-5 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-2xl shadow-brand-accent/30 transition-all hover:bg-blue-600"
+      >
+        <Phone size={18} />
+        {t('contact.book.btns.call')}
+      </a>
+
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden hero-glow">
         <div className="absolute inset-0 z-0 overflow-hidden">
