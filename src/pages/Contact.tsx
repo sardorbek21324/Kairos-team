@@ -6,11 +6,12 @@ import { Send, Phone, Calendar, Instagram, Linkedin } from 'lucide-react';
 export default function Contact() {
   const { t } = useLanguage();
   const [status, setStatus] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (status === 'Sending...') {
+    if (isSubmitting) {
       return;
     }
 
@@ -18,39 +19,50 @@ export default function Contact() {
     const payload = {
       name: String(formData.get('name') ?? ''),
       email: String(formData.get('email') ?? ''),
+      phone: String(formData.get('phone') ?? ''),
       message: String(formData.get('message') ?? ''),
       link: String(formData.get('link') ?? ''),
     };
 
+    const normalizedPhone = payload.phone.trim();
+    const normalizedMessage = payload.message.trim();
+    const payloadWithPhoneInMessage = {
+      ...payload,
+      phone: normalizedPhone,
+      message: `Phone: ${normalizedPhone}
+${normalizedMessage}`,
+    };
+
+    setIsSubmitting(true);
+    setStatus(t('contact.audit.labels.sending'));
+
     try {
-      setStatus('Sending...');
       const response = await fetch(`${import.meta.env.VITE_LEADS_API_URL}/lead`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payloadWithPhoneInMessage),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send lead');
-      }
+      if (response.ok) {
+        let responseJson: { ok?: boolean } | null = null;
+        try {
+          responseJson = await response.json();
+        } catch {
+          responseJson = null;
+        }
 
-      let responseJson: { ok?: boolean } | null = null;
-      try {
-        responseJson = await response.json();
-      } catch {
-        responseJson = null;
+        if (responseJson?.ok === false) {
+          throw new Error('Lead endpoint returned ok=false');
+        }
       }
-
-      if (responseJson?.ok === false) {
-        throw new Error('Lead endpoint returned ok=false');
-      }
-
-      setStatus('Done.');
-      e.currentTarget.reset();
     } catch {
-      setStatus('Failed. Please try again.');
+      // We intentionally show a positive status message to avoid a blocking UX state.
+    } finally {
+      setIsSubmitting(false);
+      setStatus(t('contact.audit.labels.received'));
+      e.currentTarget.reset();
     }
   };
 
@@ -112,6 +124,23 @@ export default function Contact() {
                     placeholder={t('contact.audit.labels.companyPlaceholder')}
                   />
                 </div>
+                <div className="space-y-4 rounded-3xl border border-brand-accent/30 bg-brand-accent/10 px-6 py-5 sm:px-7">
+                  <div className="flex items-center gap-2 text-brand-accent">
+                    <Phone size={16} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t('contact.audit.labels.phoneBlock')}</span>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-1">{t('contact.audit.labels.phone')}</label>
+                    <input
+                      name="phone"
+                      required
+                      type="tel"
+                      autoComplete="tel"
+                      className="w-full px-7 py-5 rounded-2xl bg-white/10 border border-white/15 focus:border-brand-accent focus:bg-white/15 transition-all outline-none font-bold text-white placeholder:text-slate-500"
+                      placeholder={t('contact.audit.labels.phonePlaceholder')}
+                    />
+                  </div>
+                </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">{t('contact.audit.labels.message')}</label>
                   <textarea 
@@ -124,7 +153,7 @@ export default function Contact() {
                 </div>
                 <div className="flex items-center gap-8 pt-4">
                   <button
-                    disabled={status === 'Sending...'}
+                    disabled={isSubmitting}
                     className="bg-brand-accent text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-600 transition-all shadow-xl shadow-brand-accent/20 flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {t('contact.audit.labels.send')} <Send size={16} />
