@@ -1,7 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MouseEvent, ReactNode } from 'react';
-import { Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
@@ -16,9 +16,17 @@ import Privacy from './pages/Privacy';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
 function AppContent() {
-  const { isChanging, t } = useLanguage();
+  const { isChanging, language, t } = useLanguage();
   const { pathname } = useLocation();
   const phoneHref = 'tel:+48503413651';
+
+  const emailHref = 'mailto:sardo@kairosteams.com';
+  const mobileCtaCopy = {
+    en: { call: 'Call now', email: 'Email us' },
+    pl: { call: 'Zadzwoń', email: 'Napisz email' },
+    ru: { call: 'Позвонить', email: 'Написать email' }
+  } as const;
+  const mobileCta = mobileCtaCopy[language];
 
   const handleCallClick = (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -41,13 +49,34 @@ function AppContent() {
         <a
           href={phoneHref}
           onClick={handleCallClick}
-          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-2xl bg-brand-accent px-5 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-2xl shadow-brand-accent/30 transition-all hover:bg-blue-600"
+          className="fixed bottom-6 right-6 z-50 hidden items-center gap-2 rounded-2xl bg-brand-accent px-5 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-2xl shadow-brand-accent/30 transition-all hover:bg-blue-600 sm:inline-flex"
         >
           <Phone size={18} />
           {t('contact.book.btns.call')}
         </a>
       )}
-      <main className="flex-grow">
+
+      <div className="fixed inset-x-4 bottom-4 z-[210] sm:hidden">
+        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/15 bg-brand-surface/95 p-2 shadow-2xl shadow-black/30 backdrop-blur-md">
+          <a
+            href={phoneHref}
+            onClick={handleCallClick}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-accent px-3 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white"
+          >
+            <Phone size={14} />
+            {mobileCta.call}
+          </a>
+          <a
+            href={emailHref}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-3 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white"
+          >
+            <Mail size={14} />
+            {mobileCta.email}
+          </a>
+        </div>
+      </div>
+
+      <main className="flex-grow pb-24 sm:pb-0">
         <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: isChanging ? 0 : 1 }}
