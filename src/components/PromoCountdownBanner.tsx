@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 
 const SHOW_DELAY_MS = 15000;
 const COUNTDOWN_SECONDS = 5 * 60;
-const DISMISS_STORAGE_KEY = 'kairos-promo-banner-dismissed';
+const COLLAPSED_STORAGE_KEY = 'kairos-promo-banner-collapsed';
 
 const promoCopy = {
   en: {
@@ -13,21 +13,27 @@ const promoCopy = {
     title: 'Get 30% off if you call us right now',
     desc: 'The offer is active only during this countdown. Call now and lock your discount.',
     cta: 'Call now',
-    timerLabel: 'Offer expires in'
+    timerLabel: 'Offer expires in',
+    compactLabel: 'Offer',
+    compactHint: 'Tap to expand'
   },
   pl: {
     badge: 'Oferta limitowana',
     title: 'Otrzymaj 30% zniżki, jeśli zadzwonisz teraz',
     desc: 'Oferta działa tylko podczas tego odliczania. Zadzwoń i zarezerwuj rabat.',
     cta: 'Zadzwoń teraz',
-    timerLabel: 'Oferta kończy się za'
+    timerLabel: 'Oferta kończy się za',
+    compactLabel: 'Oferta',
+    compactHint: 'Kliknij, aby rozwinąć'
   },
   ru: {
     badge: 'Ограниченное предложение',
     title: 'Получите скидку 30%, если позвоните прямо сейчас',
     desc: 'Предложение действует только во время этого таймера. Позвоните сейчас и зафиксируйте скидку.',
     cta: 'Позвонить сейчас',
-    timerLabel: 'До конца акции'
+    timerLabel: 'До конца акции',
+    compactLabel: 'Оффер',
+    compactHint: 'Нажмите, чтобы открыть'
   }
 } as const;
 
@@ -42,7 +48,8 @@ function formatTime(totalSeconds: number) {
 
 export default function PromoCountdownBanner() {
   const { language } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECONDS);
   const copy = useMemo(() => promoCopy[language], [language]);
   const phoneHref = 'tel:+48503413651';
@@ -63,20 +70,18 @@ export default function PromoCountdownBanner() {
       return;
     }
 
-    const isDismissed = sessionStorage.getItem(DISMISS_STORAGE_KEY) === 'true';
-    if (isDismissed) {
-      return;
-    }
+    const isCollapsed = sessionStorage.getItem(COLLAPSED_STORAGE_KEY) === 'true';
 
     const showTimer = window.setTimeout(() => {
-      setIsOpen(true);
+      setIsVisible(true);
+      setIsExpanded(!isCollapsed);
     }, SHOW_DELAY_MS);
 
     return () => window.clearTimeout(showTimer);
   }, []);
 
   useEffect(() => {
-    if (!isOpen || secondsLeft <= 0) {
+    if (!isVisible || secondsLeft <= 0) {
       return;
     }
 
@@ -85,19 +90,32 @@ export default function PromoCountdownBanner() {
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [isOpen, secondsLeft]);
+  }, [isVisible, secondsLeft]);
 
   const closeBanner = () => {
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(DISMISS_STORAGE_KEY, 'true');
+      sessionStorage.setItem(COLLAPSED_STORAGE_KEY, 'true');
     }
 
-    setIsOpen(false);
+    setIsExpanded(false);
   };
 
+  const expandBanner = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(COLLAPSED_STORAGE_KEY);
+    }
+
+    setIsExpanded(true);
+  };
+
+  if (!isVisible || secondsLeft <= 0) {
+    return null;
+  }
+
   return (
-    <AnimatePresence>
-      {isOpen && (
+    <>
+      <AnimatePresence>
+        {isExpanded && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -151,8 +169,31 @@ export default function PromoCountdownBanner() {
               {copy.cta}
             </motion.a>
           </motion.aside>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {!isExpanded && (
+          <motion.button
+            type="button"
+            onClick={expandBanner}
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="fixed bottom-24 right-4 z-[230] w-[220px] rounded-2xl border border-white/15 bg-brand-surface/95 p-3 text-left shadow-2xl shadow-black/35 backdrop-blur-sm sm:bottom-24 sm:right-6"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-flex rounded-full border border-brand-accent/35 bg-brand-accent/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-brand-accent">
+                {copy.compactLabel}
+              </span>
+              <span className="text-base font-black tracking-[0.08em] text-white">{formatTime(secondsLeft)}</span>
+            </div>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{copy.compactHint}</p>
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

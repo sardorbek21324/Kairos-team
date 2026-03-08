@@ -1,12 +1,35 @@
 import type { MouseEvent } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, CheckCircle2, Play, Zap, BarChart3, Target, Rocket, Phone } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Play, Zap, BarChart3, Target, Rocket, Phone, Mail } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { Link } from 'react-router-dom';
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const phoneHref = 'tel:+48503413651';
+
+  const emailHref = 'mailto:sardo@kairosteams.com';
+  const quickContactCopy = {
+    en: {
+      title: 'Talk to us now',
+      callNow: 'Call now',
+      emailNow: 'Send email',
+      trust: ['Fast response', 'Free consultation', 'No obligations']
+    },
+    pl: {
+      title: 'Porozmawiajmy teraz',
+      callNow: 'Zadzwoń teraz',
+      emailNow: 'Napisz email',
+      trust: ['Szybka odpowiedź', 'Bezpłatna konsultacja', 'Bez zobowiązań']
+    },
+    ru: {
+      title: 'Свяжитесь с нами сейчас',
+      callNow: 'Позвонить сейчас',
+      emailNow: 'Написать на email',
+      trust: ['Быстрый ответ', 'Бесплатная консультация', 'Без обязательств']
+    }
+  } as const;
+  const quickContact = quickContactCopy[language];
 
   const handleCallClick = (e: MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -24,7 +47,7 @@ export default function Home() {
       <a
         href={phoneHref}
         onClick={handleCallClick}
-        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-2xl bg-brand-accent px-5 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-2xl shadow-brand-accent/30 transition-all hover:bg-blue-600"
+        className="fixed bottom-6 right-6 z-50 hidden items-center gap-2 rounded-2xl bg-brand-accent px-5 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-2xl shadow-brand-accent/30 transition-all hover:bg-blue-600 sm:inline-flex"
       >
         <Phone size={18} />
         {t('contact.book.btns.call')}
@@ -82,6 +105,39 @@ export default function Home() {
             <Link to="/services" className="w-full sm:w-auto bg-white/5 border border-white/10 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all flex items-center justify-center gap-3">
               {t('nav.services')}
             </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.55 }}
+            className="mx-auto mt-8 w-full max-w-3xl rounded-[30px] border border-white/10 bg-white/5 p-5 text-left backdrop-blur-md sm:p-6"
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-accent">{quickContact.title}</p>
+                <a href={phoneHref} onClick={handleCallClick} className="mt-2 inline-flex text-xl font-black tracking-tight text-white hover:text-brand-accent transition-colors">
+                  +48 503 413 651
+                </a>
+              </div>
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+                <a href={phoneHref} onClick={handleCallClick} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-accent px-6 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-blue-600">
+                  <Phone size={15} />
+                  {quickContact.callNow}
+                </a>
+                <a href={emailHref} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-white/10">
+                  <Mail size={15} />
+                  {quickContact.emailNow}
+                </a>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {quickContact.trust.map((item) => (
+                <span key={item} className="inline-flex items-center rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-300">
+                  {item}
+                </span>
+              ))}
+            </div>
           </motion.div>
 
           <div className="mt-20 flex flex-wrap justify-center gap-4">
