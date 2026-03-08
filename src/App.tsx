@@ -5,6 +5,7 @@ import { Phone } from 'lucide-react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import PromoCountdownBanner from './components/PromoCountdownBanner';
 import Home from './pages/Home';
 import Services from './pages/Services';
 import Portfolio from './pages/Portfolio';
@@ -34,6 +35,7 @@ function AppContent() {
     <div className="min-h-screen flex flex-col relative">
       <div className="fixed inset-0 noise opacity-[0.03] pointer-events-none z-[100]" />
       <ScrollToTop />
+      <PromoCountdownBanner />
       <Header />
       {pathname !== '/' && (
         <a
