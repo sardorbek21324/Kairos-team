@@ -18,6 +18,7 @@ export default function Contact() {
     const payload = {
       name: String(formData.get('name') ?? ''),
       email: String(formData.get('email') ?? ''),
+      phone: String(formData.get('phone') ?? ''),
       message: String(formData.get('message') ?? ''),
       link: String(formData.get('link') ?? ''),
     };
@@ -111,6 +112,23 @@ export default function Contact() {
                     className="w-full px-7 py-5 rounded-2xl bg-white/5 border border-white/10 focus:border-brand-accent focus:bg-white/10 transition-all outline-none font-bold text-white placeholder:text-slate-700"
                     placeholder={t('contact.audit.labels.companyPlaceholder')}
                   />
+                </div>
+                <div className="space-y-4 rounded-3xl border border-brand-accent/30 bg-brand-accent/10 px-6 py-5 sm:px-7">
+                  <div className="flex items-center gap-2 text-brand-accent">
+                    <Phone size={16} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t('contact.audit.labels.phoneBlock')}</span>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 ml-1">{t('contact.audit.labels.phone')}</label>
+                    <input
+                      name="phone"
+                      required
+                      type="tel"
+                      autoComplete="tel"
+                      className="w-full px-7 py-5 rounded-2xl bg-white/10 border border-white/15 focus:border-brand-accent focus:bg-white/15 transition-all outline-none font-bold text-white placeholder:text-slate-500"
+                      placeholder={t('contact.audit.labels.phonePlaceholder')}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">{t('contact.audit.labels.message')}</label>
