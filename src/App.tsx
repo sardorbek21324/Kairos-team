@@ -1,6 +1,7 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ReactNode } from 'react';
+import { MouseEvent, ReactNode } from 'react';
+import { Phone } from 'lucide-react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
@@ -14,13 +15,36 @@ import Privacy from './pages/Privacy';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 
 function AppContent() {
-  const { isChanging } = useLanguage();
+  const { isChanging, t } = useLanguage();
+  const { pathname } = useLocation();
+  const phoneHref = 'tel:+48503413651';
+
+  const handleCallClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+
+    if (typeof window !== 'undefined' && (window as any).gtag_report_conversion) {
+      (window as any).gtag_report_conversion(phoneHref);
+      return;
+    }
+
+    window.location.href = phoneHref;
+  };
 
   return (
     <div className="min-h-screen flex flex-col relative">
       <div className="fixed inset-0 noise opacity-[0.03] pointer-events-none z-[100]" />
       <ScrollToTop />
       <Header />
+      {pathname !== '/' && (
+        <a
+          href={phoneHref}
+          onClick={handleCallClick}
+          className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-2 rounded-2xl bg-brand-accent px-5 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-2xl shadow-brand-accent/30 transition-all hover:bg-blue-600"
+        >
+          <Phone size={18} />
+          {t('contact.book.btns.call')}
+        </a>
+      )}
       <main className="flex-grow">
         <motion.div
           initial={{ opacity: 1 }}
