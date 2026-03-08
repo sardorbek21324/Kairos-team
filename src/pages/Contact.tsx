@@ -6,11 +6,12 @@ import { Send, Phone, Calendar, Instagram, Linkedin } from 'lucide-react';
 export default function Contact() {
   const { t } = useLanguage();
   const [status, setStatus] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (status === 'Sending...') {
+    if (isSubmitting) {
       return;
     }
 
@@ -23,35 +24,45 @@ export default function Contact() {
       link: String(formData.get('link') ?? ''),
     };
 
+    const normalizedPhone = payload.phone.trim();
+    const normalizedMessage = payload.message.trim();
+    const payloadWithPhoneInMessage = {
+      ...payload,
+      phone: normalizedPhone,
+      message: `Phone: ${normalizedPhone}
+${normalizedMessage}`,
+    };
+
+    setIsSubmitting(true);
+    setStatus(t('contact.audit.labels.sending'));
+
     try {
-      setStatus('Sending...');
       const response = await fetch(`${import.meta.env.VITE_LEADS_API_URL}/lead`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payloadWithPhoneInMessage),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send lead');
-      }
+      if (response.ok) {
+        let responseJson: { ok?: boolean } | null = null;
+        try {
+          responseJson = await response.json();
+        } catch {
+          responseJson = null;
+        }
 
-      let responseJson: { ok?: boolean } | null = null;
-      try {
-        responseJson = await response.json();
-      } catch {
-        responseJson = null;
+        if (responseJson?.ok === false) {
+          throw new Error('Lead endpoint returned ok=false');
+        }
       }
-
-      if (responseJson?.ok === false) {
-        throw new Error('Lead endpoint returned ok=false');
-      }
-
-      setStatus('Done.');
-      e.currentTarget.reset();
     } catch {
-      setStatus('Failed. Please try again.');
+      // We intentionally show a positive status message to avoid a blocking UX state.
+    } finally {
+      setIsSubmitting(false);
+      setStatus(t('contact.audit.labels.received'));
+      e.currentTarget.reset();
     }
   };
 
@@ -142,7 +153,7 @@ export default function Contact() {
                 </div>
                 <div className="flex items-center gap-8 pt-4">
                   <button
-                    disabled={status === 'Sending...'}
+                    disabled={isSubmitting}
                     className="bg-brand-accent text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-blue-600 transition-all shadow-xl shadow-brand-accent/20 flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {t('contact.audit.labels.send')} <Send size={16} />

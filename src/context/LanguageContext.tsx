@@ -265,6 +265,8 @@ const translations = {
           message: 'Message', 
           messagePlaceholder: 'What do you want to achieve in 30–90 days?',
           send: 'Send (email)', 
+          sending: 'Sending...',
+          received: 'Request received. Please wait for our call.',
           slow: 'Email is the slowest channel — for speed use phone or calendar.' 
         }
       },
@@ -537,6 +539,8 @@ const translations = {
           message: 'Wiadomość', 
           messagePlaceholder: 'Co chcesz osiągnąć w ciągu 30–90 dni?',
           send: 'Wyślij (email)', 
+          sending: 'Wysyłanie...',
+          received: 'Zgłoszenie przyjęte. Czekaj na nasz telefon.',
           slow: 'Email jest najwolniejszą opcją — jeśli zależy Ci na czasie, wybierz telefon lub kalendarz.' 
         }
       },
@@ -809,6 +813,8 @@ const translations = {
           message: 'Сообщение', 
           messagePlaceholder: 'Чего вы хотите достичь за 30–90 дней?',
           send: 'Отправить (email)', 
+          sending: 'Отправка...',
+          received: 'Заявка принята. Ожидайте наш звонок.',
           slow: 'Email — самый медленный канал. Если нужно быстро — телефон или календарь.' 
         }
       },

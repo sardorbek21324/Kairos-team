@@ -119,13 +119,18 @@ def submit_lead(payload: LeadRequest, request: Request) -> JSONResponse:
         normalized_link = raw_link.strip() if raw_link else None
         company_or_link = normalized_link or "—"
 
+        cleaned_message = payload.message.strip()
+        phone_prefix = f"Phone: {payload.phone}".strip()
+        if cleaned_message.startswith(phone_prefix):
+            cleaned_message = cleaned_message[len(phone_prefix):].lstrip()
+
         text = (
             "📩 New lead\n"
             f"Name: {payload.name}\n"
             f"Email: {payload.email}\n"
             f"Phone: {payload.phone}\n"
             f"Company/Link: {company_or_link}\n"
-            f"Message: {payload.message}"
+            f"Message: {cleaned_message}"
         )
 
         telegram_request = urllib_request.Request(
